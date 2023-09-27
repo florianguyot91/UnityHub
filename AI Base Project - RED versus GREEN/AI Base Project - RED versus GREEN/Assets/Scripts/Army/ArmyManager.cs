@@ -23,21 +23,90 @@ public abstract class ArmyManager : MonoBehaviour
 
     [SerializeField] UnityEvent m_OnArmyIsDead;
 
-    protected List<T> GetAllEnemiesOfType<T>(bool sortRandom) where T : ArmyElement
+    #region Allies Retrieval
+    public List<ArmyElement> GetAllAllies(bool sortRandom, ArmyElement allyBuyer)
     {
-        var enemies = GameObject.FindObjectsOfType<T>().Where(element => !element.gameObject.CompareTag(m_ArmyTag)).ToList();
+        var allies = GameObject.FindObjectsOfType<ArmyElement>().Where(element => element != allyBuyer && element.gameObject.CompareTag(m_ArmyTag)).ToList();
+        if (sortRandom) allies.Sort((a, b) => Random.value.CompareTo(.5f));
+        return allies;
+    }
+
+    public GameObject GetRandomAlly(ArmyElement allyBuyer)
+    {
+        var allies = GetAllAllies(true, allyBuyer);
+        return allies.FirstOrDefault()?.gameObject;
+    }
+
+    public GameObject GetRandomWeakAlly(ArmyElement allyBuyer)
+    {
+        var weakAllies = GetAllAllies(true, allyBuyer).Where(item => {
+            Health health = item.GetComponentInChildren<Health>();
+            return health && health.Value < 100;
+        });
+        return weakAllies.FirstOrDefault()?.gameObject;
+    }
+    #endregion
+
+
+    #region Enemies Retrieval
+    //all enemies
+    public List<ArmyElement> GetAllEnemies(bool sortRandom)
+    {
+        var enemies = GameObject.FindObjectsOfType<ArmyElement>().Where(element => !element.gameObject.CompareTag(m_ArmyTag)).ToList();
         if (sortRandom) enemies.Sort((a, b) => Random.value.CompareTo(.5f));
         return enemies;
     }
 
-    public GameObject GetRandomEnemy<T>(Vector3 centerPos, float minRadius, float maxRadius) where T : ArmyElement
+    public List<ArmyElement> GetAllEnemiesOfType<T>(bool sortRandom) where T : ArmyElement
     {
-        var enemies = GetAllEnemiesOfType<T>(true).Where(
-            item=>  Vector3.Distance(centerPos,item.transform.position)>minRadius
-                    && Vector3.Distance(centerPos, item.transform.position) < maxRadius);
+        var enemies = GetAllEnemies(sortRandom).Where(  element=>   (element is T)
+                                                        && !element.gameObject.CompareTag(m_ArmyTag)).ToList();
+        return enemies;
+    }
 
+    public List<ArmyElement> GetAllEnemiesByDistance(bool sortRandom, Vector3 centerPos, float minRadius, float maxRadius)
+    {
+        var enemies = GetAllEnemies(sortRandom).Where(
+            item => Vector3.Distance(centerPos, item.transform.position) > minRadius
+                    && Vector3.Distance(centerPos, item.transform.position) < maxRadius).ToList();
+        return enemies;
+    }
+
+    public List<ArmyElement> GetAllEnemiesOfTypeByDistance<T>(bool sortRandom, Vector3 centerPos, float minRadius, float maxRadius) where T : ArmyElement
+    {
+        var enemies = GetAllEnemiesOfType<T>(sortRandom).Where(
+            item => Vector3.Distance(centerPos, item.transform.position) > minRadius
+                    && Vector3.Distance(centerPos, item.transform.position) < maxRadius).ToList();
+        return enemies;
+    }
+
+    // Random Enemy
+    public GameObject GetRandomEnemy()
+    {
+        var enemies = GetAllEnemies(true);
         return enemies.FirstOrDefault()?.gameObject;
     }
+
+    public GameObject GetRandomEnemyOfType<T>() where T: ArmyElement
+    {
+        var enemies = GetAllEnemiesOfType<T>(true);
+        return enemies.FirstOrDefault()?.gameObject;
+    }
+
+    public GameObject GetRandomEnemyByDistance(Vector3 centerPos, float minRadius, float maxRadius)
+    {
+        var enemies = GetAllEnemiesByDistance(true,centerPos,minRadius,maxRadius);
+        return enemies.FirstOrDefault()?.gameObject;
+    }
+
+
+    public GameObject GetRandomEnemyOfTypeByDistance<T>(Vector3 centerPos, float minRadius, float maxRadius) where T : ArmyElement
+    {
+        var enemies = GetAllEnemiesOfTypeByDistance<T>(true, centerPos, minRadius, maxRadius);
+        return enemies.FirstOrDefault()?.gameObject;
+    }
+    #endregion
+
 
     protected void ComputeStatistics(ref int nDrones,ref int nTurrets,ref int cumulatedHealth)
 	{

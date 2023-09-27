@@ -21,7 +21,7 @@ public class SelectEnemyDrone : Action
 	{
 		if (m_ArmyElement.ArmyManager == null) return TaskStatus.Running; // la référence à l'armée n'a pas encore été injectée
 
-		target.Value = m_ArmyElement.ArmyManager.GetRandomEnemy<Drone>(transform.position,minRadius.Value,maxRadius.Value)?.transform;
+		target.Value = m_ArmyElement.ArmyManager.GetRandomEnemyOfTypeByDistance<Drone>(transform.position,minRadius.Value,maxRadius.Value)?.transform;
 		if (target.Value != null) return TaskStatus.Success;
 		else return TaskStatus.Failure;
 
